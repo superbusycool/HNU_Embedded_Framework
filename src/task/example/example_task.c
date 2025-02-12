@@ -69,7 +69,7 @@ static void example_init()
     motor_config_t gimbal_motor_config = {
             .motor_type = GM6020,
             .can_name = CAN_CHASSIS,
-            .rx_id = 0x208,
+            .rx_id = 0x206,
             .controller = &gimbal_controlelr,
     };
     chassis_motor = dji_motor_register(&chassis_motor_config, chassis_control);
