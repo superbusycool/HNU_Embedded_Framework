@@ -35,7 +35,6 @@ static struct rt_device_pwm *servo_mirror_dev;  //倍镜舵机
 
 //转子角度标志位，防止切换设计模式时拨弹电机反转
 static int total_angle_flag=SHOOT_ANGLE_CONTINUE;
-
 /*发射模块电机使用数量*/
 //#define SHT_MOTOR_NUM 3
 #define SHT_MOTOR_NUM 4
@@ -115,7 +114,7 @@ typedef struct {
 static self_shoot_info_e self_shoot_info;
 /* --------------------------------- 射击线程入口 --------------------------------- */
 static float sht_dt;
-
+static int shoot_cnt;
 /**
  * @brief shoot线程入口函数
  */
@@ -267,9 +266,15 @@ void shoot_task_entry(void* argument)
         /*开关摩擦轮*/
         if (shoot_cmd.friction_status==1)
         {
-            shoot_motor_ref[RIGHT_FRICTION] = 8000;//摩擦轮常转
-            shoot_motor_ref[MIDDLE_FRICTION] = 8000;
-            shoot_motor_ref[LEFT_FRICTION] = -8000;
+            shoot_motor_ref[RIGHT_FRICTION] = 6500;//摩擦轮常转 实测最大转速为8800
+            shoot_motor_ref[MIDDLE_FRICTION] = 6500;
+            shoot_motor_ref[LEFT_FRICTION] = -6500;
+            if(shoot_cmd.ctrl_mode == SHOOT_COUNTINUE)
+            {
+                shoot_motor_ref[RIGHT_FRICTION] = 6500;//摩擦轮常转 实测最大转速为8800
+                shoot_motor_ref[MIDDLE_FRICTION] = 6500;
+                shoot_motor_ref[LEFT_FRICTION] = -6500;
+            }
             /*从自动连发模式切换三连发及单发模式时，要继承总转子角度*/
         }
         else
@@ -290,29 +295,41 @@ void shoot_task_entry(void* argument)
 
             case SHOOT_ONE:
 
-                if(total_angle_flag == 0)
+                if(shoot_cmd.trigger_status == TRIGGER_OFF)
+                {
+                    shoot_fdb.trigger_status=SHOOT_WAITING;
+                }
+                if(total_angle_flag == SHOOT_ANGLE_CONTINUE)
                 {
                     shoot_motor_ref[TRIGGER_MOTOR]= sht_motor[TRIGGER_MOTOR]->measure.total_angle;
-                    total_angle_flag=1;
+                    total_angle_flag=SHOOT_ANGLE_SINGLE;
                 }
                 if (shoot_cmd.trigger_status == TRIGGER_ON)
                 {
-                    shoot_motor_ref[TRIGGER_MOTOR]= shoot_motor_ref[TRIGGER_MOTOR] + TRIGGER_MOTOR_51_TO_ANGLE * 19;//M3508的减速比为 19:1，因此转轴旋转51.43度，要在转子的基础上乘19倍
+                    sht_gap_time = dwt_get_time_ms() - sht_gap_start_time;
+                    sht_gap_start_time = dwt_get_time_ms();
+                    if(sht_gap_time>=200)
+                    {
+                        shoot_fdb.shoot_cnt++;
+                        //M3508的减速比为 19:1，因此转轴旋转51.43度，要在转子的基础上乘19倍
+                        shoot_motor_ref[TRIGGER_MOTOR]= shoot_motor_ref[TRIGGER_MOTOR] + TRIGGER_MOTOR_51_TO_ANGLE * 19;
+                    }
                     shoot_cmd.trigger_status=TRIGGER_OFF;//扳机归零
+                    shoot_fdb.trigger_status=SHOOT_OK;
                 }
-                shoot_fdb.trigger_status=SHOOT_OK;
 
                 break;
 
             case SHOOT_THREE:
                 /*从自动连发模式切换三连发及单发模式时，要继承总转子角度*/
-                if(total_angle_flag == 0)
+                if(total_angle_flag == SHOOT_ANGLE_CONTINUE)
                 {
                     shoot_motor_ref[TRIGGER_MOTOR]= sht_motor[TRIGGER_MOTOR]->measure.total_angle;
-                    total_angle_flag = 1;
+                    total_angle_flag = SHOOT_ANGLE_SINGLE;
                 }
                 if (shoot_cmd.trigger_status == TRIGGER_ON)
                 {
+
                     shoot_motor_ref[TRIGGER_MOTOR]= shoot_motor_ref[TRIGGER_MOTOR] + TRIGGER_MOTOR_51_TO_ANGLE * 19;//M3508的减速比为 19:1，因此转轴旋转51.43度，要在转子的基础上乘19倍
                     shoot_cmd.trigger_status=TRIGGER_OFF;//扳机归零
                     shoot_fdb.trigger_status=SHOOT_OK;
@@ -322,13 +339,14 @@ void shoot_task_entry(void* argument)
 
             case SHOOT_COUNTINUE:
                 shoot_motor_ref[TRIGGER_MOTOR] = shoot_cmd.shoot_freq;//自动模式的时候，只用速度环控制拨弹电机
-                total_angle_flag = 0;
+                total_angle_flag = SHOOT_ANGLE_CONTINUE;
                 shoot_fdb.trigger_status= SHOOT_OK;
                 break;
 
             case SHOOT_REVERSE:
-                shoot_motor_ref[TRIGGER_MOTOR]=  -2500;
-                total_angle_flag = 0;
+                shoot_motor_ref[TRIGGER_MOTOR]= shoot_motor_ref[TRIGGER_MOTOR] - TRIGGER_MOTOR_51_TO_ANGLE * 19;
+                total_angle_flag = SHOOT_ANGLE_SINGLE;
+
                 break;
 
             default:
@@ -461,13 +479,13 @@ static rt_int16_t motor_control_trigger(dji_motor_measure_t measure)
     }
 
     /*pid计算输出*/
-    if (shoot_cmd.ctrl_mode==SHOOT_ONE||shoot_cmd.ctrl_mode==SHOOT_THREE) //非连发模式的时候，用双环pid控制拨弹电机
+    if (shoot_cmd.ctrl_mode==SHOOT_ONE||shoot_cmd.ctrl_mode==SHOOT_THREE||shoot_cmd.ctrl_mode==SHOOT_REVERSE) //非连发模式的时候，用双环pid控制拨弹电机
     {
         pid_out_angle = (int16_t) pid_calculate(pid_angle, get_angle, shoot_motor_ref[TRIGGER_MOTOR]);  // 编码器增长方向与imu相反
         send_data = (int16_t) pid_calculate(pid_speed, get_speed, pid_out_angle);     // 电机转动正方向与imu相反
     }
     /*pid计算输出*/
-    else if(shoot_cmd.ctrl_mode==SHOOT_COUNTINUE||shoot_cmd.ctrl_mode==SHOOT_STOP||shoot_cmd.ctrl_mode==SHOOT_REVERSE)//自动模式的时候，只用速度环控制拨弹电机
+    else if(shoot_cmd.ctrl_mode==SHOOT_COUNTINUE||shoot_cmd.ctrl_mode==SHOOT_STOP)//自动模式的时候，只用速度环控制拨弹电机
     {
         send_data = (int16_t) pid_calculate(pid_speed, get_speed, shoot_motor_ref[TRIGGER_MOTOR] );
     }

@@ -33,10 +33,14 @@ static void cmd_pub_push(void);
 static void cmd_sub_init(void);
 static void cmd_sub_pull(void);
 
+static float self_define_pitch=0;
 /*发射停止标志位*/
 static int trigger_flag=0;
 /*舵机控制倍镜旋转标志位*/
 static int mirror_servo_flag=0;
+/*部署模式标志位*/
+static int deploy_flag = 0;
+static int cnt_flag=0;
 /*自瞄鼠标累计操作值*/
 static float mouse_accumulate_x=0;
 static float mouse_accumulate_y=0;
@@ -417,7 +421,7 @@ static void remote_to_cmd_pc_DT7(void)
     }
     if (gim_cmd.ctrl_mode==GIMBAL_AUTO)
     {
-        if (auto_relative_angle_status==RELATIVE_ANGLE_TRANS)
+        if (auto_relative_angle_status==RELATIVE_ANGLE_TRANS || gim_cmd.last_mode!=GIMBAL_AUTO)
         {
             trans_fdb.yaw=0;
             trans_fdb.pitch=0;
@@ -443,10 +447,11 @@ static void remote_to_cmd_pc_DT7(void)
     /*!如果鼠标未按下右键*/
     if (rc_now->mouse.r==0)
     {
-        if (gim_cmd.last_mode == GIMBAL_RELAX)
+        if (gim_cmd.last_mode == GIMBAL_RELAX || gim_cmd.last_mode == GIMBAL_AUTO)
         {/* 判断上次状态是否为RELAX，是则先归中 */
             gim_cmd.ctrl_mode = GIMBAL_INIT;
             chassis_cmd.ctrl_mode=CHASSIS_RELAX;
+
         }
         else
         {
@@ -507,7 +512,7 @@ static void remote_to_cmd_pc_DT7(void)
     }
     if (chassis_cmd.ctrl_mode==CHASSIS_SPIN)
     {
-        chassis_cmd.vw=3.5;//4.5+2*referee_fdb.robot_status.chassis_power_limit/60;/*!小陀螺转速，随着功率限制提升加快转速*/
+        chassis_cmd.vw=2.6;//4.5+2*referee_fdb.robot_status.chassis_power_limit/60;/*!小陀螺转速，随着功率限制提升加快转速*/
     }
     /*TODO:--------------------------------------------------发射模块状态机--------------------------------------------------------------*/
     /*!-----------------------------------------开关摩擦轮--------------------------------------------*/
@@ -525,73 +530,99 @@ static void remote_to_cmd_pc_DT7(void)
         shoot_cmd.friction_status=0;
     }
     /*!------------------------------------------------------------扳机连发模式---------------------------------------------------------*/
-    if((rc_now->mouse.l==1||rc_now->wheel>=200)&&(shoot_cmd.friction_status==1)/*&&(referee_fdb.power_heat_data.shooter_17mm_1_barrel_heat < (referee_fdb.robot_status.shooter_barrel_heat_limit-10))*/)
-    {
-        shoot_cmd.ctrl_mode=SHOOT_COUNTINUE;
-        shoot_cmd.shoot_freq=3000;
+    //自瞄模式下，开启自动扳机
+    // if(gim_cmd.ctrl_mode==GIMBAL_AUTO)
+    // {    //单发模式
+    //     if((rc_now->mouse.l==1||rc_now->wheel >= 300)&&gim_cmd.ctrl_mode==GIMBAL_AUTO
+    //          && shoot_cmd.friction_status==1)
+    //     {
+    //         if(trans_fdb.roll == 1)
+    //         {
+    //             shoot_cmd.ctrl_mode = SHOOT_ONE;
+    //             shoot_cmd.trigger_status = TRIGGER_ON;
+    //         }
+    //         else
+    //         {
+    //             if(shoot_fdb.trigger_status == SHOOT_OK)
+    //             {
+    //                 shoot_cmd.ctrl_mode = SHOOT_ONE;
+    //                 shoot_cmd.trigger_status = TRIGGER_OFF;
+    //             }
+    //
+    //         }
+    //     }//连发模式
+    //     else if((rc_now->mouse.l==1||rc_now->wheel <= -300)&&gim_cmd.ctrl_mode==GIMBAL_AUTO
+    //          && shoot_cmd.friction_status==1 )
+    //     {
+    //         if(trans_fdb.roll == 1)
+    //         {
+    //             shoot_cmd.ctrl_mode = SHOOT_COUNTINUE;
+    //             shoot_cmd.shoot_freq = 2000;
+    //         }
+    //         else
+    //         {
+    //             shoot_cmd.ctrl_mode = SHOOT_STOP;
+    //             shoot_cmd.shoot_freq = 0;
+    //         }
+    //     }
+    // }
+    // else
 
-//        if(((int16_t)referee_fdb.robot_status.shooter_barrel_heat_limit-(int16_t)referee_fdb.power_heat_data.shooter_17mm_1_barrel_heat)<=30)
-//        {
-//            shoot_cmd.shoot_freq=0;
-//        }
-//
-//        if (km.shift_sta==KEY_PRESS_LONG)
-//        {
-//            shoot_cmd.shoot_freq=4500;
-//        }
-//
-//        if(referee_fdb.robot_status.shooter_barrel_heat_limit==0)
-//        {
-//            shoot_cmd.shoot_freq=2500;
-//        }
-//        else
-//        {
-//
-//        }
-
-    }
-    //开启摩擦轮默认进入单发模式,首先判断V键是否按下或者拨轮是否向上，标记开火标志位
-    else if(km.v_sta == KEY_PRESS_ONCE || rc_now->wheel<=-350 &&(shoot_cmd.friction_status==1))
-    {
-        trigger_flag=1;
-        shoot_cmd.ctrl_mode=SHOOT_ONE;
-        shoot_cmd.trigger_status=TRIGGER_OFF;
-    }
-    //当V键松开时或拨轮恢复到0时，根据标志位判断状态
-    else if(km.v_sta == KEY_RELEASE || rc_now->wheel ==0 && (shoot_cmd.friction_status==1))
-    {
-        //如果开火标志位等于0，不开火
-        if(trigger_flag ==0)
+        //连发模式
+        if((rc_now->mouse.l==1||rc_now->wheel <= -300)&&(shoot_cmd.friction_status==1)/*&&(referee_fdb.power_heat_data.shooter_17mm_1_barrel_heat < (referee_fdb.robot_status.shooter_barrel_heat_limit-10))*/)
         {
+            shoot_cmd.ctrl_mode=SHOOT_COUNTINUE;
+            shoot_cmd.shoot_freq=2000;
+        }
+        //开启摩擦轮默认进入单发模式,首先判断鼠标左键键是否按下或者拨轮是否向下，标记开火标志位
+        else if(km.lk_sta == KEY_PRESS_ONCE || rc_now->wheel>=400 &&(shoot_cmd.friction_status==1))
+        {
+            trigger_flag=1;
             shoot_cmd.ctrl_mode=SHOOT_ONE;
             shoot_cmd.trigger_status=TRIGGER_OFF;
         }
-        //如果开火标志位等于1，表示进入单发模式，开火
-        else if(trigger_flag == 1)
+        //当V键松开时或拨轮恢复到0时，根据标志位判断状态
+        else if(km.lk_sta == KEY_RELEASE || rc_now->wheel ==0 && (shoot_cmd.friction_status==1))
         {
-            shoot_cmd.ctrl_mode=SHOOT_ONE;
-            shoot_cmd.trigger_status=TRIGGER_ON;
             //当shoot线程反馈信息显示开火完成后，清零开火标志位（记得在shoot线程shoot_stop状态将反馈信息设置为SHOOT_WAITNG）
             if(shoot_fdb.trigger_status == SHOOT_OK)
             {
                 trigger_flag=0;
             }
+            //如果开火标志位等于0，不开火
+            if(trigger_flag ==0)
+            {
+                shoot_cmd.ctrl_mode=SHOOT_ONE;
+                shoot_cmd.trigger_status=TRIGGER_OFF;
+            }
+            //如果开火标志位等于1，表示进入单发模式，开火
+            else if(trigger_flag == 1)
+            {
+                shoot_cmd.ctrl_mode=SHOOT_ONE;
+                shoot_cmd.trigger_status=TRIGGER_ON;
+            }
         }
-    }
-    else
-    {
-        shoot_cmd.ctrl_mode=SHOOT_STOP;
-        shoot_cmd.shoot_freq=0;
-    }
+        else
+        {
+            shoot_cmd.ctrl_mode=SHOOT_STOP;
+            shoot_cmd.shoot_freq=0;
+        }
+
+
     /*-------------------------------------------------------------堵弹反转检测------------------------------------------------------------*/
-    if (shoot_fdb.trigger_motor_current>=16300||reverse_cnt!=0)/*M3508电机的堵转电流是2500*/
+    if (shoot_fdb.trigger_motor_current>=16300)/*M3508电机的堵转电流是2500*/
     {
-        shoot_cmd.ctrl_mode=SHOOT_REVERSE;
-        if (reverse_cnt<120)
+        reverse_cnt++;
+        if (reverse_cnt<650)
             reverse_cnt++;
         else
+        {
             reverse_cnt=0;
+            shoot_cmd.ctrl_mode=SHOOT_REVERSE;
+        }
+
     }
+
     // /*-----------------------------------------------------------舵机开盖关盖--------------------------------------------------------------*/
     // if(rc_now->kb.bit.R==1||rc_now->wheel<=-200)
     // {
@@ -608,7 +639,7 @@ static void remote_to_cmd_pc_DT7(void)
         mirror_servo_flag = 1;//旋转倍镜标志位
     }
     //当拨轮恢复到0时，根据旋转倍镜标志位判断是否旋转倍镜
-    else if(rc_now->wheel == 0 && mirror_servo_flag==1 && shoot_cmd.friction_status==0)
+    else if(rc_now->wheel == 0 && mirror_servo_flag==1)
     {
         mirror_servo_flag = 0;
         if(shoot_cmd.mirror_enable==1)
@@ -623,6 +654,33 @@ static void remote_to_cmd_pc_DT7(void)
         memset(r_buffer_point,0,sizeof (*r_buffer_point));
     }
     /*----------------------------------------------------------------使能判断---------------------------------------------------------------*/
+
+    if(rc_now->wheel == 660 && rc_now->sw2==RC_MI)
+    {
+        cnt_flag++;
+        if(cnt_flag >= 1000)
+        {
+            cnt_flag =0;
+            if(deploy_flag == 0)
+                deploy_flag = 1;
+            else if(deploy_flag == 1)
+                deploy_flag =0;
+        }
+    }
+    else
+    {
+        cnt_flag =0;
+    }
+    if(deploy_flag == 1)
+    {
+
+
+
+        chassis_cmd.ctrl_mode = CHASSIS_RELAX;
+
+    }
+
+
     //TODO:使能判断放最后，防止抽风
     if (rc_now->sw2==RC_UP)
     {

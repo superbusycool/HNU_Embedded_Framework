@@ -161,7 +161,8 @@ void gimbal_thread_entry(void *argument)
                 gim_fdb.back_mode = BACK_STEP;
             }
             break;
-            case GIMBAL_GYRO:
+        case GIMBAL_GYRO:
+
             gim_motor_ref[YAW] = gim_cmd.yaw;
             gim_motor_ref[PITCH] = gim_cmd.pitch;
             // 底盘相对于云台归中值的角度，取负
@@ -177,7 +178,7 @@ void gimbal_thread_entry(void *argument)
             break;
 
         // TODO: add auto mode
-            case GIMBAL_AUTO:
+        case GIMBAL_AUTO:
                 /*gim_motor_ref[YAW] = gim_cmd.yaw_auto;*/
                 if(auto_staus==1)
                 {
@@ -310,14 +311,14 @@ static rt_int16_t motor_control_yaw(dji_motor_measure_t measure){
         get_speed = ins_data.gyro[Z];
         get_angle = ins_data.yaw_total_angle - gim_fdb.yaw_offset_angle_total;
         //将imu零飘清0，无奈之举，期待imu零飘问题的解决
-        if(get_speed < 0.5 && get_speed > -0.5)
-        {
-            get_speed = 0;
-        }
-        if(get_angle < 0.8 && get_angle > -0.8)
-        {
-            get_angle = 0;
-        }
+        // if(get_speed < 0.5 && get_speed > -0.5)
+        // {
+        //     get_speed = 0;
+        // }
+        // if(get_angle < 0.5 && get_angle > -0.5)
+        // {+
+        //     get_angle = 0;
+        // }
         break;
     case GIMBAL_AUTO:
         pid_speed = gim_controller[YAW].pid_speed_auto;
@@ -333,6 +334,10 @@ static rt_int16_t motor_control_yaw(dji_motor_measure_t measure){
     {
         pid_clear(pid_angle);
         pid_clear(pid_speed);
+        pid_clear(gim_controller[YAW].pid_angle_imu);
+        pid_clear(gim_controller[YAW].pid_speed_imu);
+        pid_clear(gim_controller[YAW].pid_angle_auto);
+        pid_clear(gim_controller[YAW].pid_speed_auto);
     }
 
     if(gim_cmd.ctrl_mode == GIMBAL_INIT)  // 编码器闭环
@@ -388,6 +393,10 @@ static rt_int16_t motor_control_pitch(dji_motor_measure_t measure){
     {
         pid_clear(pid_angle);
         pid_clear(pid_speed);
+        pid_clear(gim_controller[PITCH].pid_angle_imu);
+        pid_clear(gim_controller[PITCH].pid_speed_imu);
+        pid_clear(gim_controller[PITCH].pid_angle_auto);
+        pid_clear(gim_controller[PITCH].pid_speed_auto);
     }
 
     // 对于英雄的pitch轴，由于采用丝杆结构，编码器数值无法作为归中位置的参考，故均采用imu闭环
@@ -395,16 +404,16 @@ static rt_int16_t motor_control_pitch(dji_motor_measure_t measure){
      {
          /*串级pid的使用，角度环套在速度环上面*/
          /* 注意负号 */
-         pid_out_angle = pid_calculate(pid_angle, get_angle, -gim_motor_ref[PITCH]);
-         send_data = pid_calculate(pid_speed, get_speed, pid_out_angle);     // 电机转动正方向与imu相反
+         pid_out_angle = pid_calculate(pid_angle, get_angle, gim_motor_ref[PITCH]);
+         send_data = -pid_calculate(pid_speed, get_speed, pid_out_angle);     // 电机转动正方向与imu相反
       }
      else /* imu闭环 */
      {
         /* 限制云台俯仰角度 */
         VAL_LIMIT(gim_motor_ref[PITCH], PIT_ANGLE_MIN, PIT_ANGLE_MAX);
         /* 注意负号 (实测期望角度是反的，故加负号)*/
-        pid_out_angle = pid_calculate(pid_angle, get_angle, -gim_motor_ref[PITCH]);
-        send_data = pid_calculate(pid_speed, get_speed, pid_out_angle);      // 电机转动正方向与imu相反
+        pid_out_angle = pid_calculate(pid_angle, get_angle, gim_motor_ref[PITCH]);
+        send_data = -pid_calculate(pid_speed, get_speed, pid_out_angle);      // 电机转动正方向与imu相反
     }
 
     return send_data;

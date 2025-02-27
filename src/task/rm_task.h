@@ -134,6 +134,7 @@ struct shoot_fdb_msg
 {
     shoot_back_e trigger_status;  // shoot状态反馈
     int16_t trigger_motor_current; //拨弹电机电流，传给cmd控制反转
+    int shoot_cnt;
 };
 
 /* ------------------------------ transmission反馈状态数据 ------------------------------ */
@@ -144,6 +145,7 @@ struct shoot_fdb_msg
  { // 云台自瞄角度控制
      float yaw;
      float pitch;
+     float roll;
      rt_uint8_t heartbeat;
  };
 
