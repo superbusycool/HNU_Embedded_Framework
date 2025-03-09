@@ -17,6 +17,7 @@ static struct gimbal_cmd_msg gim_cmd;
 static struct ins_msg ins_data;
 static struct gimbal_fdb_msg gim_fdb;
 static struct trans_fdb_msg trans_fdb;
+static struct referee_msg refree_fdb;
 /*------------------------------传输数据相关 --------------------------------- */
 #define RECV_BUFFER_SIZE 64  // 接收环形缓冲区大小
 rt_uint8_t *r_buffer_point; //用于清除环形缓冲区buffer的指针
@@ -39,7 +40,7 @@ TeamColor  team_color;
 static rt_device_t vs_port = RT_NULL;
 /* -------------------------------- 线程间通讯话题相关 ------------------------------- */
 static publisher_t *pub_trans;
-static subscriber_t *sub_cmd,*sub_ins,*sub_gim;
+static subscriber_t *sub_cmd,*sub_ins,*sub_gim,*sub_refree;
 static void trans_sub_pull(void);
 static void trans_pub_push(void);
 static void trans_sub_init(void);
@@ -55,6 +56,7 @@ static void trans_sub_init(void)
     sub_cmd = sub_register("gim_cmd", sizeof(struct gimbal_cmd_msg));
     sub_ins = sub_register("ins_msg", sizeof(struct ins_msg));
     sub_gim = sub_register("gim_fdb", sizeof(struct gimbal_fdb_msg));
+    sub_refree = sub_register("refree_fdb", sizeof(struct referee_msg));//订阅裁判系统
 
 }
 
@@ -66,6 +68,7 @@ static void trans_sub_pull(void)
     sub_get_msg(sub_cmd, &gim_cmd);
     sub_get_msg(sub_ins, &ins_data);
     sub_get_msg(sub_gim, &gim_fdb);
+    sub_get_msg(sub_refree, &refree_fdb);
 }
 
 /**
@@ -149,8 +152,8 @@ void Send_to_pc(RpyTypeDef data_r)
 
 void judge_color()
 {
-    robot_status.robot_id = 103 ;   //以后在此处进行机器人id的赋值，即确定机器人颜色和种类
-    if(robot_status.robot_id < 10)
+    if(refree_fdb.robot_status.robot_id < 10)
+
         team_color = RED;
     else
         team_color = BLUE;

@@ -16,7 +16,7 @@
 
 /* -------------------------------- 线程间通讯话题相关 ------------------------------- */
 static struct chassis_cmd_msg chassis_cmd;
-static struct referee_fdb_msg referee_fdb;
+static struct referee_msg referee_fdb;
 static struct chassis_fdb_msg chassis_fdb;
 static struct ins_msg ins_data;
 
@@ -159,7 +159,7 @@ static void chassis_pub_init(void)
 static void chassis_sub_init(void)
 {
     sub_cmd = sub_register("chassis_cmd", sizeof(struct chassis_cmd_msg));
-    sub_referee= sub_register("referee_fdb", sizeof(struct referee_fdb_msg));
+    sub_referee= sub_register("referee_fdb", sizeof(struct referee_msg));
     sub_ins = sub_register("ins_msg", sizeof(struct ins_msg));
 }
 
@@ -195,9 +195,9 @@ static rt_int16_t motor_control_0(dji_motor_measure_t measure)
     {
         chassis_power_limit=120;
     }
-    if(referee_fdb.power_heat_data.chassis_power_buffer<20)
+    if(referee_fdb.power_heat_data.buffer_energy<20)
     {
-        chassis_max_current=chassis_power_limit*CURRENT_POWER_LIMIT_RATE*(referee_fdb.power_heat_data.chassis_power_buffer/50);
+        chassis_max_current=chassis_power_limit*CURRENT_POWER_LIMIT_RATE*(referee_fdb.power_heat_data.buffer_energy/50);
     }
     else
     {
@@ -225,9 +225,9 @@ static rt_int16_t motor_control_1(dji_motor_measure_t measure)
     {
         chassis_power_limit=120;
     }
-    if(referee_fdb.power_heat_data.chassis_power_buffer<20)
+    if(referee_fdb.power_heat_data.buffer_energy<20)
     {
-        chassis_max_current=chassis_power_limit*CURRENT_POWER_LIMIT_RATE*(referee_fdb.power_heat_data.chassis_power_buffer/50);
+        chassis_max_current=chassis_power_limit*CURRENT_POWER_LIMIT_RATE*(referee_fdb.power_heat_data.buffer_energy/50);
     }
     else
     {
@@ -254,9 +254,9 @@ static rt_int16_t motor_control_2(dji_motor_measure_t measure)
     {
         chassis_power_limit=120;
     }
-    if(referee_fdb.power_heat_data.chassis_power_buffer<20)
+    if(referee_fdb.power_heat_data.buffer_energy<20)
     {
-        chassis_max_current=chassis_power_limit*CURRENT_POWER_LIMIT_RATE*(referee_fdb.power_heat_data.chassis_power_buffer/50);
+        chassis_max_current=chassis_power_limit*CURRENT_POWER_LIMIT_RATE*(referee_fdb.power_heat_data.buffer_energy/50);
     }
     else
     {
@@ -283,9 +283,9 @@ static rt_int16_t motor_control_3(dji_motor_measure_t measure)
     {
         chassis_power_limit=120;
     }
-    if(referee_fdb.power_heat_data.chassis_power_buffer<20)
+    if(referee_fdb.power_heat_data.buffer_energy<20)
     {
-        chassis_max_current=chassis_power_limit*CURRENT_POWER_LIMIT_RATE*(referee_fdb.power_heat_data.chassis_power_buffer/50);
+        chassis_max_current=chassis_power_limit*CURRENT_POWER_LIMIT_RATE*(referee_fdb.power_heat_data.buffer_energy/50);
     }
     else
     {

@@ -1083,20 +1083,20 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     UNUSED(uart);
 }
 
-/**
-  * @brief  Rx Transfer completed callback
-  * @param  huart: UART handle
-  * @note   This example shows a simple way to report end of DMA Rx transfer, and
-  *         you can add your own implementation.
-  * @retval None
-  */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    struct stm32_uart *uart;
-    RT_ASSERT(huart != NULL);
-    uart = (struct stm32_uart *)huart;
-    dma_recv_isr(&uart->serial, UART_RX_DMA_IT_TC_FLAG);
-}
+///**
+//  * @brief  Rx Transfer completed callback
+//  * @param  huart: UART handle
+//  * @note   This example shows a simple way to report end of DMA Rx transfer, and
+//  *         you can add your own implementation.
+//  * @retval None
+//  */
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//    struct stm32_uart *uart;
+//    RT_ASSERT(huart != NULL);
+//    uart = (struct stm32_uart *)huart;
+//    dma_recv_isr(&uart->serial, UART_RX_DMA_IT_TC_FLAG);
+//}
 
 /**
   * @brief  Rx Half transfer completed callback

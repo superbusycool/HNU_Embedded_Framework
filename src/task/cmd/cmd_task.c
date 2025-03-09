@@ -24,7 +24,7 @@ static struct shoot_fdb_msg  shoot_fdb;
 static struct chassis_cmd_msg chassis_cmd;
 static struct trans_fdb_msg  trans_fdb;
 static struct ins_msg ins_data;
-static struct referee_fdb_msg referee_fdb;
+static struct referee_msg referee_fdb;
 
 static rc_dbus_obj_t *rc_now, *rc_last;
 
@@ -47,7 +47,7 @@ static float gyro_pitch_inherit;
 /*用于清除环形缓冲区buffer的指针*/
 extern rt_uint8_t *r_buffer_point;
 /*----------------------------------裁判系统数据接收/比赛状态-------------------------------------*/
-extern robot_status_t robot_status;
+//extern robot_status_t robot_status;
 //extern ext_power_heat_data_t power_heat_data_t;
 /*案件状态标志位*/
 static int key_e_status=-1;
@@ -152,7 +152,7 @@ static void cmd_sub_init(void)
     sub_shoot= sub_register("shoot_fdb", sizeof(struct shoot_fdb_msg));
     sub_trans= sub_register("trans_fdb", sizeof(struct trans_fdb_msg));
     sub_ins = sub_register("ins_msg", sizeof(struct ins_msg));
-    sub_referee= sub_register("referee_fdb",sizeof(struct referee_fdb_msg));
+    sub_referee= sub_register("refree_fdb",sizeof(struct referee_msg));
 }
 
 
@@ -570,13 +570,13 @@ static void remote_to_cmd_pc_DT7(void)
 
         case SHOOT_COUNTINUE:
             if(((rc_now->mouse.l==1||rc_now->wheel>=200)&&trans_fdb.roll==1)&&shoot_cmd.friction_status==1
-            &&(referee_fdb.power_heat_data.shooter_id1_17mm_cooling_heat < (referee_fdb.robot_status.shooter_barrel_heat_limit-10) || referee_fdb.robot_status.robot_id == 0)
+            &&(referee_fdb.power_heat_data.shooter_17mm_1_barrel_heat < (referee_fdb.robot_status.shooter_barrel_heat_limit-10) || referee_fdb.robot_status.robot_id == 0)
             //在未连接裁判系统时机器人ID为0，此时忽略裁判系统枪口热量进行开火，但未验证在链接裁判系统后没有连接到服务器时ID是否也为0以及链接裁判系统的其他情况，从而导致在未经允许的情况下解除保险开火
             )
             {
                 shoot_cmd.shoot_freq= DBUS_FRICTION_AUTO_SPEED_H;
                 /*!扳机连发功率限制如果未挂载功率限制，发射频率置为一个合适速度*/
-                if(((int16_t)referee_fdb.robot_status.shooter_barrel_heat_limit-(int16_t)referee_fdb.power_heat_data.shooter_id1_17mm_cooling_heat)<=30)
+                if(((int16_t)referee_fdb.robot_status.shooter_barrel_heat_limit-(int16_t)referee_fdb.power_heat_data.shooter_17mm_1_barrel_heat)<=30)
                 {
                     shoot_cmd.shoot_freq=0;
                 }

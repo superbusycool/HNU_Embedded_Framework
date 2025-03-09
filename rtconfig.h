@@ -382,7 +382,7 @@
 #define BSP_USING_KALMAN_FILTER
 #define BSP_USING_RAMP
 #define BSP_USING_CHASSIS_POWER_MODE
-#define BSP_USING_DEFAULT_MODE
+#define BSP_USING_POWER_LIMIT
 /* end of RoboMaster Algorithms */
 
 /* RoboMaster Tasks */

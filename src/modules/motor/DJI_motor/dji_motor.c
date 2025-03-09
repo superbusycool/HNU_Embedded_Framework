@@ -23,7 +23,6 @@ float power__all=0;
 static uint8_t idx = 0; // register idx,是该文件的全局电机索引,在注册时使用
 /* DJI电机的实例,此处仅保存指针,内存的分配将通过电机实例初始化时通过malloc()进行 */
 static dji_motor_object_t *dji_motor_obj[DJI_MOTOR_CNT] = {NULL};
- static struct referee_fdb_msg referee_fdb;
 static rt_device_t chassis_can, gimbal_can;
 
 // TODO: 0x2ff容易发送失败
@@ -320,7 +319,7 @@ void dji_motor_control()
                     }
                     power__all=power_all; //用于观察与裁判系统读取功率的拟合效果
                     int powerlimit = 60;
-                    int power_limit = referee_fdb.robot_status.chassis_power_limit;
+                    int power_limit = referee_data.robot_status.chassis_power_limit;
                     if (power_limit >=50 && power_limit <=120){
                         powerlimit = 60;
                     }
