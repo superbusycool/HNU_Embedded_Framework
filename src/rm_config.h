@@ -115,23 +115,24 @@
 /* 电机速度环 */
 #define CHASSIS_KP_V_MOTOR              5
 #define CHASSIS_KI_V_MOTOR              5.6908896696549f
-#define CHASSIS_KD_V_MOTOR              0
+#define CHASSIS_KD_V_MOTOR              0.000000000425
 #define CHASSIS_INTEGRAL_V_MOTOR        8000
 #define CHASSIS_MAX_V_MOTOR             16000
 // TODO: 参数待整定
 /* 跟随云台PID */
 #define CHASSIS_KP_V_FOLLOW             0.151f
 #define CHASSIS_KI_V_FOLLOW             0
-#define CHASSIS_KD_V_FOLLOW             0.0055639f
+#define CHASSIS_KD_V_FOLLOW             0.0035639f
 #define CHASSIS_INTEGRAL_V_FOLLOW       0
+#define CHASSIS_DEADBAND_V_FOLLOW       1.6
 #define CHASSIS_MAX_V_FOLLOW            1500
 
 /* ---------------------------------- 云台相关 ---------------------------------- */
 #define YAW_MOTOR_ID     0x207
 #define PITCH_MOTOR_ID   0x208
 
-#define CENTER_ECD_YAW   6811      //云台yaw轴编码器归中值
-#define CENTER_ECD_PITCH 6104         //云台pitch轴编码器归中值
+#define CENTER_ECD_YAW   6769      //云台yaw轴编码器归中值
+#define CENTER_ECD_PITCH 25         //云台pitch轴编码器归中值
 
 /* pitch轴最大仰角 */
 #define PIT_ANGLE_MAX        31.0f
@@ -226,8 +227,8 @@
 #define DBUS_FRICTION_LAUNCH_SPEED 8300
 #define DBUS_SHOOT_REVERSE_SPEED 4000
 /** COUNTINUE模式参数 **/
-#define DBUS_FRICTION_AUTO_SPEED_L 2500
-#define DBUS_FRICTION_AUTO_SPEED_H 4500
+#define DBUS_FRICTION_AUTO_SPEED_L 2500  //拨弹电机转速
+#define DBUS_FRICTION_AUTO_SPEED_H 9000  //拨弹电机转速
 /* -------------------------------- 发射电机PID参数 ------------------------------- */
 // TODO: 速度期望应改为变量应对速度切换。初次参数调整已完成
 /* 右摩擦轮M3508电机PID参数 */

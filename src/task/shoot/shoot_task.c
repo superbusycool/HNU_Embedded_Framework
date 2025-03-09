@@ -119,14 +119,14 @@ void shoot_task_entry(void* argument)
         }
 
         //检测是否堵弹，堵弹反转一次
-       /* if (sht_motor[TRIGGER_MOTOR]->measure.real_current>=8000||reverse_cnt!=0)
+        if (sht_motor[TRIGGER_MOTOR]->measure.real_current>=8000||reverse_cnt!=0)
         {
            shoot_cmd.ctrl_mode=SHOOT_REVERSE;
             if (reverse_cnt<100)
                 reverse_cnt++;
             else
                 reverse_cnt=0;
-        }*/
+        }
          shoot_fdb.trigger_motor_current=sht_motor[TRIGGER_MOTOR]->measure.real_current;
         /*控制模式判断*/
         /*subs遥控器*/

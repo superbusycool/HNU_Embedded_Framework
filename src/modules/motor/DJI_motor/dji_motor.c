@@ -16,14 +16,16 @@ float power__all=0;
 #define SPEED_SMOOTH_COEF 0.85f      // 最好大于0.85
 #define CURRENT_SMOOTH_COEF 0.9f     // 必须大于0.9
 #define ECD_ANGLE_COEF_DJI 0.043945f // (360/8192),将编码器值转化为角度制
-#define  constant 0.675f//2650
+ int powerlimit = 0;
+ int power_limit = 100;
+#define  constant 2.7//2650
 #define k_rpm 1.453e-07//0.001651
 #define k_current 1.23e-07//0.000000001721
 #define k_Torque 1.997e-06f
 static uint8_t idx = 0; // register idx,是该文件的全局电机索引,在注册时使用
 /* DJI电机的实例,此处仅保存指针,内存的分配将通过电机实例初始化时通过malloc()进行 */
 static dji_motor_object_t *dji_motor_obj[DJI_MOTOR_CNT] = {NULL};
- static struct referee_fdb_msg referee_fdb;
+ static struct referee_msg referee_fdb;
 static rt_device_t chassis_can, gimbal_can;
 
 // TODO: 0x2ff容易发送失败
@@ -319,10 +321,10 @@ void dji_motor_control()
                         }
                     }
                     power__all=power_all; //用于观察与裁判系统读取功率的拟合效果
-                    int powerlimit = 50;
-                    int power_limit = referee_fdb.robot_status.chassis_power_limit;
+                     powerlimit = 50;
+                     power_limit = referee_fdb.robot_status.chassis_power_limit;
                     if (power_limit >=50 && power_limit <=120){
-                        powerlimit = power_limit;
+                        powerlimit = power_limit =;
                     }
                     //底盘功率限制单位转换
                     if (power_all>powerlimit) {
@@ -332,13 +334,13 @@ void dji_motor_control()
                             power[j] = k_zoom * power[j] - k_rpm * rpm[j] * rpm[j] - constant;
                             if (set1[j] >= 0) {
                                 set1[j] = (-k_Torque * rpm[j] +sqrt(k_Torque * rpm[j] * k_Torque * rpm[j] + 4 * power[j] * k_current)) /(2 * k_current);
-                                if (set1[j]>16000){
-                                    set1[j]=0;
+                                if (set1[j]>15000){
+                                    set1[j]=15000;
                                 }
                             } else {
                                 set1[j] = (-k_Torque * rpm[j] -sqrt(k_Torque * rpm[j] * k_Torque * rpm[j] + 4 * power[j] * k_current)) /(2 * k_current);
-                                if (set1[j]<-16000){
-                                    set1[j]=0;
+                                if (set1[j]<-15000){
+                                    set1[j]=-15000;
                                 }
                             }
                         }

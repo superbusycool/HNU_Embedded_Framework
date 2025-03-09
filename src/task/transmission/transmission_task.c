@@ -17,6 +17,8 @@ static struct gimbal_cmd_msg gim_cmd;
 static struct ins_msg ins_data;
 static struct gimbal_fdb_msg gim_fdb;
 static struct trans_fdb_msg trans_fdb;
+static struct referee_msg refree_fdb;
+
 /*------------------------------传输数据相关 --------------------------------- */
 #define RECV_BUFFER_SIZE 64  // 接收环形缓冲区大小
 rt_uint8_t r_buffer[RECV_BUFFER_SIZE];  // 接收环形缓冲区
@@ -142,8 +144,8 @@ void Send_to_pc(RpyTypeDef data_r)
 
 void judge_color()
 {
-    robot_status.robot_id = 3 ;   //以后在此处进行机器人id的赋值，即向上位机发送机器人颜色
-    if(robot_status.robot_id < 10)
+
+    if(refree_fdb.robot_status.robot_id< 10)
         team_color = RED;
     else
         team_color = BLUE;

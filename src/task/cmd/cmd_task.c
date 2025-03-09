@@ -23,7 +23,7 @@ static struct shoot_cmd_msg  shoot_cmd;
 static struct shoot_fdb_msg  shoot_fdb;
 static struct chassis_cmd_msg chassis_cmd;
 static struct trans_fdb_msg  trans_fdb;
-static struct referee_fdb_msg referee_fdb;
+static struct referee_msg referee_fdb;
 static struct ins_msg ins_data;
 
 static rc_dbus_obj_t *rc_now, *rc_last;
@@ -155,7 +155,7 @@ static void cmd_sub_init(void)
     sub_gim = sub_register("gim_fdb", sizeof(struct gimbal_fdb_msg));
     sub_shoot= sub_register("shoot_fdb", sizeof(struct shoot_fdb_msg));
     sub_trans= sub_register("trans_fdb", sizeof(struct trans_fdb_msg));
-    sub_referee= sub_register("referee_fdb",sizeof(struct referee_fdb_msg));
+    sub_referee= sub_register("referee_fdb",sizeof(struct referee_msg));
     sub_ins = sub_register("ins_msg", sizeof(struct ins_msg));
 }
 
@@ -483,7 +483,7 @@ static void remote_to_cmd_pc_controler(void)
         shoot_cmd.friction_status=0;
     }
     /*TODO:------------------------------------------------------------扳机连发模式---------------------------------------------------------*/
-    if(((rc_now->mouse.l==1||rc_now->wheel>=200)&&trans_fdb.roll==1)&&shoot_cmd.friction_status==1
+    if((((rc_now->mouse.l==1||rc_now->wheel>=200)&&trans_fdb.roll==1)&&shoot_cmd.friction_status==1) || ((rc_now->mouse.l==1||rc_now->wheel>=200)&&shoot_cmd.friction_status==1)
 //    &&(referee_fdb.power_heat_data.shooter_17mm_1_barrel_heat < (referee_fdb.robot_status.shooter_barrel_heat_limit-10))
     )
     {

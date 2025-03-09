@@ -212,6 +212,8 @@ float pid_calculate(pid_obj_t *pid, float measure, float ref)
     {
         pid->Output = 0;
         pid->ITerm = 0;
+        pid->Pout =0;
+        pid->Dout =0;
     }
 
     // 保存当前数据,用于下次计算

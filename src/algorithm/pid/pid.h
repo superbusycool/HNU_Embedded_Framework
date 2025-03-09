@@ -33,6 +33,18 @@
         .Improve = Improve_val,                                                      \
     }
 
+#define INIT_PID_CONFIG_test(Kp_val, Ki_val, Kd_val, deadband,IntegralLimit_val, MaxOut_val, Improve_val) \
+    {                                                                                \
+        .Kp = Kp_val,                                                                \
+        .Ki = Ki_val,                                                                \
+        .Kd = Kd_val,                                                                \
+        .DeadBand = deadband ,                                                       \
+        .IntegralLimit = IntegralLimit_val,                                          \
+        .MaxOut = MaxOut_val,                                                        \
+        .Improve = Improve_val,                                                      \
+    }
+
+
 /* PID 优化环节使能标志位,通过位与可以判断启用的优化环节 */
 typedef enum
 {

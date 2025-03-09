@@ -153,9 +153,9 @@ static uint8_t cali_count;  // 校准次数
 float bmi088_g_norm;        // 通过校准得出的重力加速度
 float accel_scale;          // 根据标定结果校准加速度计标度因数
 // 需定期校准后手动修改
-#define GxOFFSET  0.00000127707f
-#define GyOFFSET -0.00000808811f
-#define GzOFFSET -0.00002852123f
+#define GxOFFSET  0.00000110679f
+#define GyOFFSET -0.00000229872f
+#define GzOFFSET -0.00000085138f
 #define gNORM 9.744925f
 
 /* Re-implement this function to define customized rotation */
@@ -660,7 +660,7 @@ static rt_err_t bim088_accel_read(float data[3])
  */
 static void bmi088_calibrate(void){
     static float start_time;
-    static uint16_t cali_times = 5000;   // 需要足够多的数据才能得到有效陀螺仪零偏校准结果
+    static uint16_t cali_times = 7000;   // 需要足够多的数据才能得到有效陀螺仪零偏校准结果
     float accel[3], gyro[3];
     float gyroMax[3], gyroMin[3];
     float gNormTemp, gNormMax, gNormMin;
