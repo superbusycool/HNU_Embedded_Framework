@@ -101,7 +101,6 @@ void transmission_task_entry(void* argument)
     if (vs_port)
     {
         rt_device_open(vs_port, RT_DEVICE_FLAG_INT_RX);
-
     }
     /*环形缓冲区初始化*/
     rt_ringbuffer_init(&receive_buffer, r_buffer, RECV_BUFFER_SIZE);

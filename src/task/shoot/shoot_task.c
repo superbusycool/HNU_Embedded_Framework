@@ -266,14 +266,14 @@ void shoot_task_entry(void* argument)
         /*开关摩擦轮*/
         if (shoot_cmd.friction_status==1)
         {
-            shoot_motor_ref[RIGHT_FRICTION] = 6500;//摩擦轮常转 实测最大转速为8800
-            shoot_motor_ref[MIDDLE_FRICTION] = 6500;
-            shoot_motor_ref[LEFT_FRICTION] = -6500;
+            shoot_motor_ref[RIGHT_FRICTION] = 5400;//摩擦轮常转 实测最大转速为8800
+            shoot_motor_ref[MIDDLE_FRICTION] = 5400;
+            shoot_motor_ref[LEFT_FRICTION] = -5400;
             if(shoot_cmd.ctrl_mode == SHOOT_COUNTINUE)
             {
-                shoot_motor_ref[RIGHT_FRICTION] = 6500;//摩擦轮常转 实测最大转速为8800
-                shoot_motor_ref[MIDDLE_FRICTION] = 6500;
-                shoot_motor_ref[LEFT_FRICTION] = -6500;
+                shoot_motor_ref[RIGHT_FRICTION] = 5400;//摩擦轮常转 实测最大转速为8800
+                shoot_motor_ref[MIDDLE_FRICTION] = 5400;
+                shoot_motor_ref[LEFT_FRICTION] = -5400;
             }
             /*从自动连发模式切换三连发及单发模式时，要继承总转子角度*/
         }
