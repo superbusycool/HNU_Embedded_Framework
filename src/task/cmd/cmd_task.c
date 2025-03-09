@@ -512,7 +512,7 @@ static void remote_to_cmd_pc_DT7(void)
     }
     if (chassis_cmd.ctrl_mode==CHASSIS_SPIN)
     {
-        chassis_cmd.vw=2.6;//4.5+2*referee_fdb.robot_status.chassis_power_limit/60;/*!小陀螺转速，随着功率限制提升加快转速*/
+        chassis_cmd.vw=5;//4.5+2*referee_fdb.robot_status.chassis_power_limit/60;/*!小陀螺转速，随着功率限制提升加快转速*/
     }
     /*TODO:--------------------------------------------------发射模块状态机--------------------------------------------------------------*/
     /*!-----------------------------------------开关摩擦轮--------------------------------------------*/

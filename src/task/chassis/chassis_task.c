@@ -36,6 +36,7 @@ static void chassis_sub_pull(void);
 static pid_obj_t *follow_pid; // 用于底盘跟随云台计算vw
 static pid_config_t chassis_follow_config = INIT_PID_CONFIG(CHASSIS_KP_V_FOLLOW, CHASSIS_KI_V_FOLLOW, CHASSIS_KD_V_FOLLOW, CHASSIS_INTEGRAL_V_FOLLOW, CHASSIS_MAX_V_FOLLOW,
                                                          (PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement));
+
 static struct chassis_controller_t
 {
     pid_obj_t *speed_pid;
@@ -82,7 +83,7 @@ void chassis_thread_entry(void *argument)
     chassis_sub_init();
     chassis_motor_init();
     TIM_Init();
-
+    follow_pid->DeadBand = 1;
     LOG_I("Chassis Task Start");
     for (;;)
     {

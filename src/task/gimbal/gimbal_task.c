@@ -75,7 +75,7 @@ static void gimbal_motor_init();
 static rt_int16_t motor_control_yaw(dji_motor_measure_t measure);
 static rt_int16_t motor_control_pitch(dji_motor_measure_t measure);
 static rt_int16_t get_relative_pos(rt_int16_t raw_ecd, rt_int16_t center_offset);
-
+static rt_int16_t compute_feedforward(float target_velocity, float target_accel, float theta_deg);
 static int auto_staus=1;
 /*自瞄相对角传参反馈*/
 auto_relative_angle_status_e auto_relative_angle_status=RELATIVE_ANGLE_TRANS;
@@ -310,15 +310,15 @@ static rt_int16_t motor_control_yaw(dji_motor_measure_t measure){
         pid_angle = gim_controller[YAW].pid_angle_imu;
         get_speed = ins_data.gyro[Z];
         get_angle = ins_data.yaw_total_angle - gim_fdb.yaw_offset_angle_total;
-        //将imu零飘清0，无奈之举，期待imu零飘问题的解决
-        // if(get_speed < 0.5 && get_speed > -0.5)
-        // {
-        //     get_speed = 0;
-        // }
-        // if(get_angle < 0.5 && get_angle > -0.5)
-        // {+
-        //     get_angle = 0;
-        // }
+        // 将imu零飘清0，无奈之举，期待imu零飘问题的解决
+         // if(get_speed < 0.5 && get_speed > -0.5)
+         // {
+         //     get_speed = 0;
+         // }
+         // if(get_angle < 0.5 && get_angle > -0.5)
+         // {
+         //     get_angle = 0;
+         // }
         break;
     case GIMBAL_AUTO:
         pid_speed = gim_controller[YAW].pid_speed_auto;
@@ -363,6 +363,8 @@ static rt_int16_t motor_control_pitch(dji_motor_measure_t measure){
     static float get_speed, get_angle;  // 闭环反馈量
     static float pid_out_angle;         // 角度环输出
     static rt_int16_t send_data;        // 最终发送给电调的数据
+    static uint32_t FEEDBACK_DWT_CNT;   //记录时间戳
+    static float filtered_accel;
 
     switch (gim_cmd.ctrl_mode)
     {
@@ -400,20 +402,37 @@ static rt_int16_t motor_control_pitch(dji_motor_measure_t measure){
     }
 
     // 对于英雄的pitch轴，由于采用丝杆结构，编码器数值无法作为归中位置的参考，故均采用imu闭环
-     if(gim_cmd.ctrl_mode == GIMBAL_INIT)  // 编码器闭环
+     if(gim_cmd.ctrl_mode == GIMBAL_AUTO)  // 编码器闭环
      {
          /*串级pid的使用，角度环套在速度环上面*/
          /* 注意负号 */
          pid_out_angle = pid_calculate(pid_angle, get_angle, gim_motor_ref[PITCH]);
-         send_data = -pid_calculate(pid_speed, get_speed, pid_out_angle);     // 电机转动正方向与imu相反
+
+         float feedforward = 500 * pid_out_angle; //+ 50 * filtered_accel  ; //简单估计前馈量
+         send_data = -pid_calculate(pid_speed, get_speed, pid_out_angle) - feedforward;     // 电机转动正方向与imu相反
       }
      else /* imu闭环 */
      {
         /* 限制云台俯仰角度 */
         VAL_LIMIT(gim_motor_ref[PITCH], PIT_ANGLE_MIN, PIT_ANGLE_MAX);
-        /* 注意负号 (实测期望角度是反的，故加负号)*/
-        pid_out_angle = pid_calculate(pid_angle, get_angle, gim_motor_ref[PITCH]);
-        send_data = -pid_calculate(pid_speed, get_speed, pid_out_angle);      // 电机转动正方向与imu相反
+
+
+         pid_out_angle = pid_calculate(pid_angle, get_angle, gim_motor_ref[PITCH]);
+         if(pid_out_angle < 0)  //向下运动降低Kp，提升kd
+         {
+             pid_speed->Kp = PITCH_KP_V_IMU * 0.8;
+             pid_speed->Ki = PITCH_KI_V_IMU;
+             pid_speed->Kd = PITCH_KD_V_IMU * 1.2;
+         }
+         else
+         {
+             pid_speed->Kp = PITCH_KP_V_IMU;
+             pid_speed->Ki = PITCH_KI_V_IMU;
+             pid_speed->Kd = PITCH_KD_V_IMU;
+         }
+
+         float feedforward = 500 * pid_out_angle; //+ 50 * filtered_accel  ; //简单估计前馈量
+        send_data = -pid_calculate(pid_speed, get_speed, pid_out_angle) - feedforward ;      // 电机转动正方向与imu相反
     }
 
     return send_data;
@@ -443,3 +462,38 @@ rt_int16_t get_relative_pos(rt_int16_t raw_ecd, rt_int16_t center_offset)
     }
     return tmp;
 }
+
+
+// 前馈补偿计算（单位：输出值，范围-10000~10000）
+rt_int16_t compute_feedforward(float target_velocity, float target_accel, float theta_deg)
+{
+    // 常量定义
+    const rt_int16_t Kt = 0.18;          // 扭矩常数 (N·m/A) 2006电机
+    const rt_int16_t L = 0.002;          // 丝杆导程 (m)
+    const rt_int16_t N = 36.0;           // 减速比
+    const rt_int16_t m = 5.0;            // 负载质量 (kg)
+    const rt_int16_t Fs = 1.0;           // 静摩擦对应电流 (A)
+    const rt_int16_t Fc = 0.5;           // 动摩擦对应电流 (A)
+    const rt_int16_t vs = 0.1;           // Stribeck速度 (rad/s)  假设
+    const rt_int16_t sigma = 0.1;        // 粘性摩擦系数 (A·s/rad) 假设
+
+    // 1. 惯性补偿
+    rt_int16_t J_total = 1.05e-5;        // 总惯量 (kg·m²)
+    rt_int16_t alpha = target_accel;     // 目标角加速度 (rad/s²)
+    rt_int16_t I_inertia = (J_total * alpha) / Kt;
+
+    // 2. 摩擦补偿
+    rt_int16_t v = fabs(target_velocity);
+    rt_int16_t F_friction = Fc + (Fs - Fc) * exp(-pow(v / vs, 2)) + sigma * v;
+    rt_int16_t I_friction = F_friction * L / (2 * PI * Kt * N);
+
+    // 3. 重力补偿
+    rt_int16_t theta_rad = theta_deg * PI / 180.0;
+    rt_int16_t I_gravity = (m * 9.81 * sin(theta_rad) * L) / (2 * PI * Kt * N);
+
+    // 总前馈量（转换为输出值，10000对应10A）
+    rt_int16_t feedforward = (I_inertia + I_friction + I_gravity) * 1000.0;
+
+    return feedforward;
+}
+
