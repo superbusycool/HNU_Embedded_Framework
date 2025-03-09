@@ -6,26 +6,51 @@
 #define RTTHREAD_REFEREE_TASK_H
 
 #include "drv_common.h"
-#include "Referee_system.h"
-#include "BSP_CRC.h"
 #include "string.h"
-#include "fifo.h"
 #include "stdint.h"
-#include "UI_print.h"
-//extern uint8_t RX_AgreementData_Buffer0[Agreement_RX_BUF_NUM];   //接收裁判系统返回数据的接收缓冲区0，该缓冲区设置的相当富裕
-//extern uint8_t RX_AgreementData_Buffer1[Agreement_RX_BUF_NUM];   //接收裁判系统返回数据的接收缓冲区1，该缓冲区设置的相当富裕
-//extern DMA_HandleTypeDef hdma_usart6_rx;
-//extern UART_HandleTypeDef huart6;
-//extern Frame_header_Typedef Referee_Data_header;         //实例化一个帧头结构体
-//extern RX_AgreementData     Referee_Data;                //实例化一个帧头结构体
-//extern fifo_s_t RX_AgreementData_FIFO;
-//extern int UI_TCBNum;
-//extern UI_TCB* UI_SendTCBSequence[30];
-//extern float PowerData[4];
-//extern char spin_flag;
-//extern uint8_t fric_flag;
-//extern _Bool fric_wheel_run;
-//extern _Bool cap_open_flag;
-//extern robot_status_t ext_game_robot_status;
-//void referee_thread_entry(void *argument); //线程入口函数
-#endif //RTTHREAD_REFEREE_TASK_H
+#include "rm_task.h"
+
+#define HEADER_SOF 0xA5
+#define Agreement_RX_BUF_NUM 512        //DMA要传输的数据项数目NDTR寄存器填充值 200，即收200字节后自动填充并转换缓冲数组
+
+#define FIFO_BUF_LENGTH     1024
+#ifndef SETINGS_REFEREE_SYSTEM_H
+#define SETINGS_REFEREE_SYSTEM_H
+#endif
+#define REF_PROTOCOL_HEADER_SIZE            sizeof(referee_data_header_t)
+#define REF_PROTOCOL_CMD_SIZE               2
+#define REF_PROTOCOL_CRC16_SIZE             2
+#define REF_HEADER_CRC_LEN                  (REF_PROTOCOL_HEADER_SIZE + REF_PROTOCOL_CRC16_SIZE)
+#define REF_HEADER_CRC_CMDID_LEN            (REF_PROTOCOL_HEADER_SIZE + REF_PROTOCOL_CRC16_SIZE + sizeof(uint16_t))
+#define REF_HEADER_CMDID_LEN                (REF_PROTOCOL_HEADER_SIZE + sizeof(uint16_t))
+
+void referee_thread_entry(void *argument);
+
+/**
+ * @brief 裁判系统接收初始化
+ */
+void Referee_system_Init(uint8_t *  rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num);
+/**
+ * @brief 裁判系统接收数据帧解包
+ */
+void Referee_Data_Unpack();
+
+/**
+ * @brief 裁判系统数据更新并保存
+ */
+void Referee_Data_Solve(uint8_t* referee_data_frame);
+void referee_UI_task_init(void);
+void referee_control_task(void);
+void Referee_Data_Solve(uint8_t* frame);
+
+/* -------------------------------- 线程间通讯话题相关 ------------------------------- */
+static struct gimbal_cmd_msg gim_cmd;
+static struct ins_msg ins_data;
+static struct gimbal_fdb_msg gim_fdb;
+static struct referee_msg referee_data;
+
+
+
+
+#endif
+

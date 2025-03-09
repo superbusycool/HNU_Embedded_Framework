@@ -16,7 +16,7 @@
 
 /* -------------------------------- 线程间通讯话题相关 ------------------------------- */
 static struct chassis_cmd_msg chassis_cmd;
-static struct referee_fdb_msg referee_fdb;
+static struct referee_msg referee_fdb;
 static struct chassis_fdb_msg chassis_fdb;
 static struct ins_msg ins_data;
 
@@ -160,7 +160,7 @@ static void chassis_pub_init(void)
 static void chassis_sub_init(void)
 {
     sub_cmd = sub_register("chassis_cmd", sizeof(struct chassis_cmd_msg));
-    sub_referee= sub_register("referee_fdb", sizeof(struct referee_fdb_msg));
+    sub_referee= sub_register("referee_fdb", sizeof(struct referee_msg));
     sub_ins = sub_register("ins_msg", sizeof(struct ins_msg));
 }
 

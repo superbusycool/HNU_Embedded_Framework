@@ -23,7 +23,7 @@ float power__all=0;
 static uint8_t idx = 0; // register idx,是该文件的全局电机索引,在注册时使用
 /* DJI电机的实例,此处仅保存指针,内存的分配将通过电机实例初始化时通过malloc()进行 */
 static dji_motor_object_t *dji_motor_obj[DJI_MOTOR_CNT] = {NULL};
- static struct referee_fdb_msg referee_fdb;
+ static struct referee_msg referee_fdb;
 static rt_device_t chassis_can, gimbal_can;
 
 // TODO: 0x2ff容易发送失败
@@ -333,12 +333,12 @@ void dji_motor_control()
                             if (set1[j] >= 0) {
                                 set1[j] = (-k_Torque * rpm[j] +sqrt(k_Torque * rpm[j] * k_Torque * rpm[j] + 4 * power[j] * k_current)) /(2 * k_current);
                                 if (set1[j]>16000){
-                                    set1[j]=0;
+                                    set1[j]=16000;
                                 }
                             } else {
                                 set1[j] = (-k_Torque * rpm[j] -sqrt(k_Torque * rpm[j] * k_Torque * rpm[j] + 4 * power[j] * k_current)) /(2 * k_current);
                                 if (set1[j]<-16000){
-                                    set1[j]=0;
+                                    set1[j]=-16000;
                                 }
                             }
                         }

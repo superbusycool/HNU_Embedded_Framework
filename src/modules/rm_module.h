@@ -48,11 +48,7 @@
 #ifdef BSP_USING_RC_KEYBOARD
 #include "keyboard.h"
 #endif /* BSP_USING_RC_KEYBOARD */
-#ifdef BSP_USING_REFEREE
-#include "BSP_CRC.h"
-#include "fifo.h"
-#include "Referee_system.h"
-#endif /* BSP_USING_REFEREE */
+
 #ifdef BSP_USING_LEG
 #include "drv_leg.h"
 #endif /* BSP_USING_LEG */

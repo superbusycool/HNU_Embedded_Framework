@@ -24,7 +24,7 @@ static struct shoot_fdb_msg  shoot_fdb;
 static struct chassis_cmd_msg chassis_cmd;
 static struct trans_fdb_msg  trans_fdb;
 static struct ins_msg ins_data;
-static struct referee_fdb_msg referee_fdb;
+static struct referee_msg referee_fdb;
 
 static rc_dbus_obj_t *rc_now, *rc_last;
 
@@ -158,7 +158,7 @@ static void cmd_sub_init(void)
     sub_shoot= sub_register("shoot_fdb", sizeof(struct shoot_fdb_msg));
     sub_trans= sub_register("trans_fdb", sizeof(struct trans_fdb_msg));
     sub_ins = sub_register("ins_msg", sizeof(struct ins_msg));
-    sub_referee= sub_register("referee_fdb",sizeof(struct referee_fdb_msg));
+    sub_referee= sub_register("referee_fdb",sizeof(struct referee_msg));
 }
 
 

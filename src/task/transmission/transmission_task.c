@@ -17,6 +17,9 @@ static struct gimbal_cmd_msg gim_cmd;
 static struct ins_msg ins_data;
 static struct gimbal_fdb_msg gim_fdb;
 static struct trans_fdb_msg trans_fdb;
+static struct referee_msg refree_fdb;
+
+TeamColor  team_color;
 /*------------------------------传输数据相关 --------------------------------- */
 #define RECV_BUFFER_SIZE 64  // 接收环形缓冲区大小
 rt_uint8_t *r_buffer_point; //用于清除环形缓冲区buffer的指针
@@ -85,6 +88,7 @@ static void trans_pub_push(void)
 
 /* --------------------------------- 通讯线程入口 --------------------------------- */
 static float trans_dt;
+static float openfire;
 
 void transmission_task_entry(void* argument)
 {
@@ -116,6 +120,8 @@ void transmission_task_entry(void* argument)
         trans_sub_pull();
         /* 发布数据更新 */
         trans_pub_push();
+
+        judge_color();//判断红蓝
 /*--------------------------------------------------具体需要发送的数据--------------------------------- */
         if((dwt_get_time_ms()-heart_dt)>=HEART_BEAT)
         {
@@ -131,10 +137,19 @@ void transmission_task_entry(void* argument)
     }
 }
 
+void judge_color()
+{
+    if(refree_fdb.robot_status.robot_id < 10)
+
+        team_color = RED;
+    else
+        team_color = BLUE;
+}
+
 void Send_to_pc(RpyTypeDef data_r)
 {
     /*填充数据*/
-    pack_Rpy(&data_r, (gim_fdb.yaw_offset_angle - ins_data.yaw), ins_data.pitch-gim_fdb.pit_offset_angle, ins_data.roll);
+    pack_Rpy(&data_r, (gim_fdb.yaw_offset_angle - ins_data.yaw), ins_data.pitch-gim_fdb.pit_offset_angle, openfire,team_color);
     Check_Rpy(&data_r);
 
     rt_device_write(vs_port, 0, (uint8_t*)&data_r, sizeof(data_r));
@@ -144,7 +159,7 @@ void Send_to_pc(RpyTypeDef data_r)
     }
 }
 
-void pack_Rpy(RpyTypeDef *frame, float yaw, float pitch,float roll)
+void pack_Rpy(RpyTypeDef *frame, float yaw, float pitch,float openfire, int team_color)   //此处roll值作为开火标志位
 {
     int8_t rpy_tx_buffer[FRAME_RPY_LEN] = {0} ;
     int32_t rpy_data = 0;
@@ -161,13 +176,18 @@ void pack_Rpy(RpyTypeDef *frame, float yaw, float pitch,float roll)
     rpy_tx_buffer[6] = *gimbal_rpy >> 8;
     rpy_tx_buffer[7] = *gimbal_rpy >> 16;
     rpy_tx_buffer[8] = *gimbal_rpy >> 24;
-    rpy_data = roll *1000;
+    rpy_data = openfire *1000;
     rpy_tx_buffer[9] = *gimbal_rpy;
     rpy_tx_buffer[10] = *gimbal_rpy >> 8;
     rpy_tx_buffer[11] = *gimbal_rpy >> 16;
     rpy_tx_buffer[12] = *gimbal_rpy >> 24;
+    rpy_data = team_color *1000;
+    rpy_tx_buffer[13] = *gimbal_rpy;
+    rpy_tx_buffer[14] = *gimbal_rpy >> 8;
+    rpy_tx_buffer[15] = *gimbal_rpy >> 16;
+    rpy_tx_buffer[16] = *gimbal_rpy >> 24;
 
-    memcpy(&frame->DATA[0], rpy_tx_buffer,13);
+    memcpy(&frame->DATA[0], rpy_tx_buffer,17);
 
     frame->LEN = FRAME_RPY_LEN;
 }
