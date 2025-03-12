@@ -319,7 +319,8 @@ void dji_motor_control()
                     }
                     power__all=power_all; //用于观察与裁判系统读取功率的拟合效果
                     int powerlimit = 60;
-                    int power_limit = referee_data.robot_status.chassis_power_limit;
+//                    int power_limit = referee_data.robot_status.chassis_power_limit;
+                    int power_limit =50;
                     if (power_limit >=50 && power_limit <=120){
                         powerlimit = 60;
                     }

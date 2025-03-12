@@ -150,6 +150,8 @@ void referee_thread_entry(void *argument){
     /*发布数据初始化*/
     refree_pub_init();
 
+    My_Ui_Init();
+
 
     /* USER CODE BEGIN DataAnalysisTask */
     Referee_system_Init(RX_AgreementData_Buffer0,RX_AgreementData_Buffer1,Agreement_RX_BUF_NUM);
@@ -158,8 +160,11 @@ void referee_thread_entry(void *argument){
     /* 主循环 */
     while (1) {
 
+        client_info_update();//识别自生红蓝,需要先提前设置兵种,判断相同兵种的红蓝状态
+
         Ui_Send();        // 发送更新UI
         Ui_Info_Update();
+
 
         if ((hdma_usart6_rx.Instance->CR & DMA_SxCR_CT) == RESET) {
             Referee_Data_Unpack(RX_AgreementData_Buffer0, &Referee_Data_header, &Referee_Data);
