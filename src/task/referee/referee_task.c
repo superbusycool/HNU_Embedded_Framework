@@ -150,6 +150,8 @@ void referee_thread_entry(void *argument){
     /*发布数据初始化*/
     refree_pub_init();
 
+    My_Ui_Init();
+
 
     /* USER CODE BEGIN DataAnalysisTask */
     Referee_system_Init(RX_AgreementData_Buffer0,RX_AgreementData_Buffer1,Agreement_RX_BUF_NUM);
@@ -158,7 +160,6 @@ void referee_thread_entry(void *argument){
     /* 主循环 */
     while (1) {
 
-        client_info_update();
 
         Ui_Send();        // 发送更新UI
         Ui_Info_Update();
@@ -174,6 +175,8 @@ void referee_thread_entry(void *argument){
         memcpy(&(referee_data.game_status),&game_status, sizeof(game_status_t));
         memcpy(&(referee_data.game_robot_HP),&game_robot_HP, sizeof(game_robot_HP_t));
         memcpy(&(referee_data.event_data),&game_robot_HP, sizeof(event_data_t));
+
+        client_info_update(referee_data);
 
         refree_pub_push(); // 发布数据更新
         rt_thread_mdelay(1);

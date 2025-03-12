@@ -26,9 +26,9 @@
  * 
  */
 typedef enum {
-  LOW_PRIORITY = 0,  // 低优先级(动态UI中不需要高刷新率的)
-  MID_PRIORITY,      // 中优先级(动态UI中需要一定刷新率的)
-  HIGH_PRIORITY,     // 高优先级(动态UI中需要高刷新率的)
+    LOW_PRIORITY = 0,  // 低优先级(动态UI中不需要高刷新率的)
+    MID_PRIORITY,      // 中优先级(动态UI中需要一定刷新率的)
+    HIGH_PRIORITY,     // 高优先级(动态UI中需要高刷新率的)
 }ui_priority_e;
 
 /**
@@ -37,8 +37,8 @@ typedef enum {
  */
 typedef enum
 {
-  SEND_CHAR_MODE = 0,
-  SEND_GRAPHIC_MODE,
+    SEND_CHAR_MODE = 0,
+    SEND_GRAPHIC_MODE,
 } ui_send_mode_e;
 
 /**
@@ -51,25 +51,25 @@ typedef enum {
 } ui_sent_state_e;
 
 typedef enum {
-  LINE = 0,  // 直线
-  RECTANGEL, // 矩形
-  CIRCLE,    // 圆
-  ELLIPSE,   // 椭圆
-  ARC,       // 圆弧
-  FLOAT,     // 浮点数
-  INT,       // 整数
-  CHAR,      // 字符
+    LINE = 0,  // 直线
+    RECTANGEL, // 矩形
+    CIRCLE,    // 圆
+    ELLIPSE,   // 椭圆
+    ARC,       // 圆弧
+    FLOAT,     // 浮点数
+    INT,       // 整数
+    CHAR,      // 字符
 } ui_type_e;
 
 /**
  * @brief 函数返回状态
  * 
  */
-typedef enum 
+typedef enum
 {
-  UI_ERROR    ,
-  UI_OK       ,
-  UI_BUSY     ,
+    UI_ERROR    ,
+    UI_OK       ,
+    UI_BUSY     ,
 } ui_status_e;
 
 /* Exported struct ------------------------------------------------------------*/
@@ -79,31 +79,31 @@ typedef enum
  * 
  */
 typedef struct __packed {
-  /*******不变配置*********/
-  ui_priority_e priority;       // UI优先级(仅动态UI需要配置)
-  ui_type_e ui_type;            // UI内容类型
-  char name[3];             // 图形名称
+    /*******不变配置*********/
+    ui_priority_e priority;       // UI优先级(仅动态UI需要配置)
+    ui_type_e ui_type;            // UI内容类型
+    char name[3];             // 图形名称
 
-  /*******可变配置*********/
+    /*******可变配置*********/
 
-  /*******通用配置********/
-  operate_tpye_e operate_type; // 操作类型
-  uint8_t layer;           // 图层数，0~9
-  graphic_color_e color;   // 颜色
-  uint16_t width;          // 线条宽度
-  uint16_t start_x;        // 起点 x 坐标
-  uint16_t start_y;        // 起点 y 坐标
-  uint16_t end_x;          // 终点 x 坐标
-  uint16_t end_y;          // 终点 y 坐标
-  /*******特殊配置********/
-  uint16_t radius;      // 圆：半径
-  uint16_t start_angel; // 圆弧：起始角度
-  uint16_t end_angel;   // 圆弧：终止角度
-  uint16_t size;        // 文字数字：字体大小
-  float float_num;      // 浮点数: 显示的数字
-  uint16_t decimal;     // 浮点数：小数位有效个数
-  int32_t int_num;      // 整数: 显示的数字
-  char text[30];        // 字符串：显示的文字
+    /*******通用配置********/
+    operate_tpye_e operate_type; // 操作类型
+    uint8_t layer;           // 图层数，0~9
+    graphic_color_e color;   // 颜色
+    uint16_t width;          // 线条宽度
+    uint16_t start_x;        // 起点 x 坐标
+    uint16_t start_y;        // 起点 y 坐标
+    uint16_t end_x;          // 终点 x 坐标
+    uint16_t end_y;          // 终点 y 坐标
+    /*******特殊配置********/
+    uint16_t radius;      // 圆：半径
+    uint16_t start_angel; // 圆弧：起始角度
+    uint16_t end_angel;   // 圆弧：终止角度
+    uint16_t size;        // 文字数字：字体大小
+    float float_num;      // 浮点数: 显示的数字
+    uint16_t decimal;     // 浮点数：小数位有效个数
+    int32_t int_num;      // 整数: 显示的数字
+    char text[30];        // 字符串：显示的文字
 } ui_config_t;
 
 /**
@@ -111,20 +111,20 @@ typedef struct __packed {
  * 
  */
 typedef struct __packed {
-  ui_sent_state_e sent_state; // 消息发送状态标志位
-  uint32_t updateTick;             // 更新消息时的时间戳
-  uint16_t  priority_value;        // UI的优先级值
-  ui_config_t ui_config;           // 用户配置UI信息
+    ui_sent_state_e sent_state; // 消息发送状态标志位
+    uint32_t updateTick;             // 更新消息时的时间戳
+    uint16_t  priority_value;        // UI的优先级值
+    ui_config_t ui_config;           // 用户配置UI信息
 } ui_info_t;
 
 /**
  * @brief UI链表节点结构体
  * 
  */
-typedef struct Node_u 
+typedef struct Node_u
 {
-  ui_info_t *ui;
-  struct Node_u *next;
+    ui_info_t *ui;
+    struct Node_u *next;
 } Node_u;
 
 
