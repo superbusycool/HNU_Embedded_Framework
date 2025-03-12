@@ -40,6 +40,7 @@
 
 #include "main.h"
 #include "stdbool.h"
+#include "referee_task.h"
 
 //1920*1080
 #define CLIENT_MID_POSITION_X 960
@@ -196,7 +197,7 @@ typedef struct
 
 /********************其他end********************/
 
-void client_info_update(void);
+void  client_info_update(struct referee_msg referee);
 
 //画直线
 graphic_data_struct_t draw_line(char *name,  //图形名
