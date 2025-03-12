@@ -34,18 +34,18 @@
 #include "string.h"
 #include "stdbool.h"
 #include "stdio.h"
-#include "referee_task.h"
+
 
 /* 配置区 begin */
 #define UI_huart huart6  //串口接口
-static struct referee_msg refree_data;
+
 
 extern UART_HandleTypeDef UI_huart;
 
 client_info_t client_info =
         {
-                .robot_id = 1,
-                .client_id = 0x0101,
+                .robot_id = 3,//红三
+                .client_id = 0x0103,
         };
 uint8_t client_tx_buf[128];
 
@@ -53,21 +53,19 @@ uint8_t client_tx_buf[128];
  * @brief 更新红蓝方机器人信息，在裁判系统接受中断中调用
  *
  */
-void  client_info_update(void)
+void  client_info_update(struct referee_msg referee)
 {
-    switch(refree_data.robot_status.robot_id)
-    {
-        case 1:
-            client_info.robot_id = 1;
-            client_info.client_id = 0x0101;
-            break;
-        case 101:
-            client_info.robot_id = 101;
-            client_info.client_id = 0x0165;
-            break;
-        default:
-            break;
-    }
+
+      if(referee.robot_status.robot_id>100){
+
+          client_info.robot_id = 103;
+          client_info.client_id = 0x0167;
+
+      }else{
+            client_info.robot_id = 3;
+            client_info.client_id = 0x0103;
+
+      }
 }
 /* 配置区 end */
 
