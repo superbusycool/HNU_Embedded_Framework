@@ -131,7 +131,7 @@ int robot_task_init(void)
      /* 创建线程，名称是  shoot ，入口是  referee_task_entry */
      referee_thread_handle = rt_thread_create("referee",
                                               referee_thread_entry, RT_NULL,
-                                            768,15, 10);
+                                            4096,15, 10);
      /* 如果获得线程控制块，启动这个线程 */
      if ( referee_thread_handle != RT_NULL)
          rt_thread_startup(referee_thread_handle);

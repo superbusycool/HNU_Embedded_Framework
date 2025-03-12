@@ -150,6 +150,8 @@ void referee_thread_entry(void *argument){
     /*发布数据初始化*/
     refree_pub_init();
 
+    My_Ui_Init();
+
 
     /* USER CODE BEGIN DataAnalysisTask */
     Referee_system_Init(RX_AgreementData_Buffer0,RX_AgreementData_Buffer1,Agreement_RX_BUF_NUM);
