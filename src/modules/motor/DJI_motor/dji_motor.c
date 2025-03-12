@@ -324,7 +324,7 @@ void dji_motor_control()
                      powerlimit = 50;
                      power_limit = referee_fdb.robot_status.chassis_power_limit;
                     if (power_limit >=50 && power_limit <=120){
-                        powerlimit = power_limit =;
+                        powerlimit = power_limit ;
                     }
                     //底盘功率限制单位转换
                     if (power_all>powerlimit) {
